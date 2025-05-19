@@ -16,14 +16,12 @@ HEADERS = {
 }
 
 def extract_kana_from_text(text):
-    # 匹配“読み方：〇〇”的假名，提取平假名（假设最多10字符）
     match = re.search(r"読み方：([ぁ-んー゛゜]{1,10})", text)
     if match:
         return match.group(1)
     return ""
 
 def clean_meaning(raw):
-    # 删掉“［名］”之前的内容，保留释义部分，最大截断300字
     if "［" in raw:
         parts = raw.split("［", 1)
         if len(parts) == 2:
@@ -36,7 +34,7 @@ def get_weblio_meaning_and_kana(word):
         res = requests.get(url, headers=HEADERS, timeout=10)
         soup = BeautifulSoup(res.text, "html.parser")
 
-        # 假名提取：全文查找「読み方：」匹配
+        # 提取假名
         kana_text = ""
         for tag in soup.find_all(["div", "p", "li", "dt", "dd", "span", "th"]):
             text = tag.get_text(strip=True)
@@ -45,7 +43,7 @@ def get_weblio_meaning_and_kana(word):
                 kana_text = kana
                 break
 
-        # 释义提取：仅取最上方第一个 .kiji 元素
+        # 提取释义
         kiji_elem = soup.select_one(".kijiWrp .kiji")
         meaning = kiji_elem.get_text(strip=True) if kiji_elem else "未找到释义"
         meaning = clean_meaning(meaning)
@@ -57,7 +55,7 @@ def get_weblio_meaning_and_kana(word):
             "source": "Weblio日文词典"
         }
 
-    except Exception as e:
+    except Exception:
         return {
             "word": word,
             "kana": "",
